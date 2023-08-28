@@ -149,6 +149,12 @@ imagePreviewLabel.addEventListener("click", () => {
 
 dialogRegisterDogButton.addEventListener("click", () => {
 
+  // 기존에 생성한 엘리먼트가 없으면 새로 생성
+  if (!dogDataMap.has(dogData.id)) {
+    const dogInfo = createDogInfoElement(dogData);
+    dogInfoContainer.appendChild(dogInfo);
+  }
+
   //  정보 생성
   const dogInfo = document.createElement("div");
   dogInfo.className = "dog-info";
@@ -298,12 +304,19 @@ dialogRegisterDogButton.addEventListener("click", () => {
   modalContainer.style.display = "none";
 });
 
+// 객체와 엘리먼트 관리를 위한 맵
+const dogDataMap = new Map();
 
 // 체크박스 변화 감지와 정보 추적
 const dogCheckboxes = []; // 선택된 체크박스를 추적하기 위한 배열
 
 // 정보 엘리먼트 생성
 function createDogInfoElement(dogData) {
+
+  // 이미 생성한 엘리먼트가 있는 경우 해당 엘리먼트를 반환
+  if (dogDataMap.has(dogData.id)) {
+    return dogDataMap.get(dogData.id);
+  }
 
   const dogInfo = document.createElement("div");
   dogInfo.className = "dog-info";
@@ -396,6 +409,8 @@ function createDogInfoElement(dogData) {
   dogGender.textContent = dogData.gender;
   dogInfo.appendChild(dogGender);
 
+  // 새로운 엘리먼트를 맵에 추가
+  dogDataMap.set(dogData.id, dogInfo);
   return dogInfo;
 }
 
@@ -554,19 +569,27 @@ function updateDogInfoOnScreen() {
 
   getDocs(dogsCollection)
     .then((querySnapshot) => {
-      // 기존 정보를 모두 삭제
-      dogInfoContainer.innerHTML = "";
       querySnapshot.forEach((doc) => {
         const dogData = doc.data();
-        dogData.id = doc.id; // Firestore 문서의 ID 값을 dogData 객체에 추가
-        const dogInfo = createDogInfoElement(dogData);
-        dogInfoContainer.appendChild(dogInfo);
+        dogData.id = doc.id;
+
+        // 이미 생성한 엘리먼트가 있는 경우 해당 엘리먼트를 활용하여 업데이트
+        if (dogDataMap.has(dogData.id)) {
+          const dogInfo = dogDataMap.get(dogData.id);
+          // 엘리먼트의 내용을 수정
+          // 예: dogInfo.querySelector(".dog-name").textContent = dogData.name;
+        } else {
+          // 기존 코드와 동일하게 엘리먼트 생성
+          const dogInfo = createDogInfoElement(dogData);
+          dogInfoContainer.appendChild(dogInfo);
+        }
       });
     })
     .catch((error) => {
       console.error("Firestore 데이터 가져오기 실패:", error);
     });
 }
+
 
 
 
